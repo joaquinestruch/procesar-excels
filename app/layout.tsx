@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
+  title: 'Procesar Excels',
   description: 'Created with v0',
   generator: 'v0.app',
 }
