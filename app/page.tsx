@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,9 +16,9 @@ export default function ExcelProcessor() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState("Esperando archivo...")
+  const [singleChannelInterval, setSingleChannelInterval] = useState<5 | 15>(5)
 
-  const handleFileLoad = useCallback(async (data: ExcelData) => {
-    setExcelData(data)
+  const processData = useCallback(async (data: ExcelData, intervalForSingle: 5 | 15) => {
     setError(null)
     setProcessedResults([])
     setIsProcessing(true)
@@ -45,14 +45,11 @@ export default function ExcelProcessor() {
             b.toLowerCase().includes(orderChannel.toLowerCase())
           )
           
-          // Si ambos están en el orden, usar el índice
           if (indexA !== -1 && indexB !== -1) {
             return indexA - indexB
           }
-          // Si solo uno está en el orden, ese va primero
           if (indexA !== -1) return -1
           if (indexB !== -1) return 1
-          // Si ninguno está en el orden, mantener orden alfabético
           return a.localeCompare(b)
         })
 
@@ -67,7 +64,7 @@ export default function ExcelProcessor() {
         selections.push({
           channel: "Canal Único",
           selected: true,
-          interval: 15,
+          interval: intervalForSingle,
         })
       }
 
@@ -87,6 +84,22 @@ export default function ExcelProcessor() {
       setIsProcessing(false)
     }
   }, [])
+
+  const handleFileLoad = useCallback((data: ExcelData) => {
+    // Determine the initial interval based on filename before setting data
+    const is5Min = data.fileName.includes("5_min") || data.fileName.includes("5min") || data.fileName.includes("5_minutos");
+    const initialInterval = is5Min ? 5 : 15;
+    
+    setSingleChannelInterval(initialInterval)
+    setExcelData(data)
+  }, [])
+
+  // Auto-process when data or single interval option changes
+  useEffect(() => {
+    if (excelData) {
+      processData(excelData, singleChannelInterval)
+    }
+  }, [excelData, singleChannelInterval, processData])
 
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage)
@@ -125,6 +138,33 @@ export default function ExcelProcessor() {
           </CardHeader>
           <CardContent className="space-y-4">
             <FileUpload onFileLoad={handleFileLoad} onError={handleError} />
+            
+            {/* Opciones de intervalo para Canal Único */}
+            {excelData && !excelData.hasChannelColumn && (
+              <div className="flex items-center gap-4 mt-4 p-4 border border-slate-700 rounded-md bg-slate-800/50">
+                <span className="text-sm font-medium text-slate-300">
+                  Intervalo a utilizar para el archivo cargado:
+                </span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant={singleChannelInterval === 5 ? "default" : "outline"} 
+                    onClick={() => setSingleChannelInterval(5)}
+                    className={singleChannelInterval === 5 ? "" : "bg-transparent text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-white"}
+                    size="sm"
+                  >
+                    Cada 5 minutos
+                  </Button>
+                  <Button 
+                    variant={singleChannelInterval === 15 ? "default" : "outline"} 
+                    onClick={() => setSingleChannelInterval(15)}
+                    className={singleChannelInterval === 15 ? "" : "bg-transparent text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-white"}
+                    size="sm"
+                  >
+                    Cada 15 minutos
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

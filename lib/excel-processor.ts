@@ -72,19 +72,14 @@ export async function processExcelData(
       const minutes = row.time.getMinutes()
       const hours = row.time.getHours()
 
-      // Always include 09:20
-      if (hours === 9 && minutes === 20) {
-        return true
-      }
+      const isOlga = selection.channel.toLowerCase().includes("olga")
 
-      const matchesInterval = minutes % actualInterval === 0
-
-      // For 15-minute intervals, exclude 09:15 and 09:30
-      if (actualInterval === 15 && hours === 9 && (minutes === 15 || minutes === 30)) {
+      // Special logic for Olga: skip 09:15 (and 09:20 is naturally included since interval is 5)
+      if (isOlga && hours === 9 && minutes === 15) {
         return false
       }
 
-      return matchesInterval
+      return minutes % actualInterval === 0
     })
 
     if (filteredRows.length === 0) {

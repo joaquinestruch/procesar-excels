@@ -48,7 +48,7 @@ export function ResultsTable({ results, viewType, fileName }: ResultsTableProps)
     results.forEach((result) => {
       // Add channel name as header
       const displayInterval = result.channel.toLowerCase().includes("olga") ? 5 : result.interval
-      numbersData.push(`${result.channel} (${displayInterval} min)`)
+      numbersData.push(result.channel === "Canal Único" ? `Resultados (${displayInterval} min)` : `${result.channel} (${displayInterval} min)`)
 
       // Add only the rounded numerical values, tab-separated
       const roundedValues = result.values.map((v) => (typeof v === "number" ? Math.round(v) : v))
@@ -101,7 +101,7 @@ export function ResultsTable({ results, viewType, fileName }: ResultsTableProps)
             colSpan={maxCols - 1}
             className="text-sm font-mono border-r border-slate-600 px-3 py-2 text-slate-200"
           >
-            {`${result.channel} (${displayInterval} min)`}
+            {result.channel === "Canal Único" ? `Resultados (${displayInterval} min)` : `${result.channel} (${displayInterval} min)`}
           </TableCell>
           <TableCell className="text-sm font-mono px-3 py-2 text-right">
             
