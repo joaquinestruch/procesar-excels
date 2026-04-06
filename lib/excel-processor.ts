@@ -47,6 +47,16 @@ export async function processExcelData(
           } else {
             parsedTime = new Date(timeValue)
           }
+        } else if (typeof timeValue === "number") {
+          // Excel date/time is a number where fractional part is the time of day
+          // Excel stores dates as days since 1900.
+          const fractionalDay = timeValue - Math.floor(timeValue)
+          const totalSeconds = Math.round(fractionalDay * 86400)
+          const hours = Math.floor(totalSeconds / 3600)
+          const minutes = Math.floor((totalSeconds % 3600) / 60)
+          const seconds = totalSeconds % 60
+          parsedTime = new Date()
+          parsedTime.setHours(hours, minutes, seconds, 0)
         } else {
           parsedTime = new Date(timeValue)
         }
@@ -70,14 +80,6 @@ export async function processExcelData(
     // Apply interval filtering
     const filteredRows = processedRows.filter((row) => {
       const minutes = row.time.getMinutes()
-      const hours = row.time.getHours()
-
-      const isOlga = selection.channel.toLowerCase().includes("olga")
-
-      // Special logic for Olga: skip 09:15 (and 09:20 is naturally included since interval is 5)
-      if (isOlga && hours === 9 && minutes === 15) {
-        return false
-      }
 
       return minutes % actualInterval === 0
     })
